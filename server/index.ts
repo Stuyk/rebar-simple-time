@@ -3,32 +3,31 @@ import { useRebar } from '@Server/index.js';
 import { TimeConfig } from './config.js';
 
 const Rebar = useRebar();
+const ServerTime = Rebar.useServerTime();
 const RebarEvents = Rebar.events.useEvents();
 
-const time = {
-    hour: TimeConfig.startHour,
-    minute: TimeConfig.startMinute,
-};
-
 function updateTime() {
+    const time = ServerTime.getTime();
+
     if (TimeConfig.useServerTime) {
         const currentTime = new Date(Date.now());
-        time.hour = currentTime.getHours();
-        time.minute = currentTime.getMinutes();
-
-        if (time.hour >= 24) {
-            time.hour = 0;
-        }
+        ServerTime.setHour(currentTime.getHours());
+        ServerTime.setMinute(currentTime.getMinutes());
     } else {
-        time.minute += TimeConfig.minutesPerMinute;
-        if (time.minute >= 60) {
-            time.minute = 0;
-            time.hour += 1;
+        let minute = time.minute + TimeConfig.minutesPerMinute;
+        let hour = time.hour;
+
+        if (minute >= 60) {
+            minute = 0;
+            hour += 1;
 
             if (time.hour >= 24) {
-                time.hour = 0;
+                hour = 0;
             }
         }
+
+        ServerTime.setHour(hour);
+        ServerTime.setMinute(minute);
     }
 
     for (let player of alt.Player.all) {
@@ -45,6 +44,7 @@ function updateTime() {
 }
 
 function handleUpdateTime(player: alt.Player) {
+    const time = ServerTime.getTime();
     Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
 }
 
