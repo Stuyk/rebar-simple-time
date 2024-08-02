@@ -45,6 +45,6 @@ function handleUpdateTime(player: alt.Player) {
     Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
 }
 
-alt.setInterval(updateTime, 2000);
+alt.setInterval(updateTime, 60000);
 alt.on('rebar:timeChanged', updateAllPlayers);
 alt.on('playerConnect', handleUpdateTime);
