@@ -10,8 +10,7 @@ function updateTime() {
 
     if (TimeConfig.useServerTime) {
         const currentTime = new Date(Date.now());
-        timeService.setHour(currentTime.getHours());
-        timeService.setMinute(currentTime.getMinutes());
+        timeService.setTime(currentTime.getHours(), currentTime.getMinutes(), currentTime.getSeconds());
     } else {
         let minute = time.minute + TimeConfig.minutesPerMinute;
         let hour = time.hour;
@@ -25,16 +24,7 @@ function updateTime() {
             }
         }
 
-        timeService.setHour(hour);
-        timeService.setMinute(minute);
-    }
-
-    for (let player of alt.Player.all) {
-        if (!Rebar.player.useStatus(player).hasCharacter()) {
-            continue;
-        }
-
-        handleUpdateTime(player);
+        timeService.setTime(hour, minute, 0);
     }
 
     alt.log(
@@ -42,10 +32,19 @@ function updateTime() {
     );
 }
 
+function updateAllPlayers() {
+    const time = timeService.getTime();
+
+    for (let player of alt.Player.all) {
+        Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
+    }
+}
+
 function handleUpdateTime(player: alt.Player) {
     const time = timeService.getTime();
     Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
 }
 
-alt.setInterval(updateTime, 60000);
+alt.setInterval(updateTime, 2000);
+alt.on('rebar:timeChanged', updateAllPlayers);
 alt.on('playerConnect', handleUpdateTime);
