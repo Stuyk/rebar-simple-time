@@ -3,16 +3,14 @@ import { useRebar } from '@Server/index.js';
 import { TimeConfig } from './config.js';
 
 const Rebar = useRebar();
-const ServerTime = Rebar.useServerTime();
-const RebarEvents = Rebar.events.useEvents();
+const timeService = Rebar.services.useTimeService();
 
 function updateTime() {
-    const time = ServerTime.getTime();
+    const time = timeService.getTime();
 
     if (TimeConfig.useServerTime) {
         const currentTime = new Date(Date.now());
-        ServerTime.setHour(currentTime.getHours());
-        ServerTime.setMinute(currentTime.getMinutes());
+        timeService.setTime(currentTime.getHours(), currentTime.getMinutes(), currentTime.getSeconds());
     } else {
         let minute = time.minute + TimeConfig.minutesPerMinute;
         let hour = time.hour;
@@ -26,16 +24,7 @@ function updateTime() {
             }
         }
 
-        ServerTime.setHour(hour);
-        ServerTime.setMinute(minute);
-    }
-
-    for (let player of alt.Player.all) {
-        if (!Rebar.player.useStatus(player).hasCharacter()) {
-            continue;
-        }
-
-        handleUpdateTime(player);
+        timeService.setTime(hour, minute, 0);
     }
 
     alt.log(
@@ -43,10 +32,19 @@ function updateTime() {
     );
 }
 
+function updateAllPlayers() {
+    const time = timeService.getTime();
+
+    for (let player of alt.Player.all) {
+        Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
+    }
+}
+
 function handleUpdateTime(player: alt.Player) {
-    const time = ServerTime.getTime();
+    const time = timeService.getTime();
     Rebar.player.useWorld(player).setTime(time.hour, time.minute, 0);
 }
 
 alt.setInterval(updateTime, 60000);
-RebarEvents.on('character-bound', handleUpdateTime);
+alt.on('rebar:timeChanged', updateAllPlayers);
+alt.on('playerConnect', handleUpdateTime);
